@@ -159,6 +159,7 @@ merged_project/
 - JWT Authentication
 - bcryptjs
 - CORS
+- Face-api.js
 
 ## Multi-Tenant Architecture
 
