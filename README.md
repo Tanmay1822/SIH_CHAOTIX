@@ -1,4 +1,4 @@
-# AAFOK - Academic Management System
+# CampusFlow- Academic Management System
 
 A comprehensive academic management system that combines timetable generation and facial recognition attendance monitoring.
 
