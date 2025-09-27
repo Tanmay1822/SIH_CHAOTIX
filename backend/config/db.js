@@ -3,8 +3,6 @@ import mongoose from 'mongoose';
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGO_URI, {
-      useUnifiedTopology: true,
-      useNewUrlParser: true,
       dbName: process.env.MASTER_DB_NAME || 'aafok_master'
     });
     console.log(`MongoDB Connected: ${conn.connection.host}`);
@@ -21,8 +19,6 @@ export const getTenantConnection = async (tenantId) => {
   }
   const uri = process.env.MONGO_URI;
   const conn = await mongoose.createConnection(uri, {
-    useUnifiedTopology: true,
-    useNewUrlParser: true,
     dbName: `${process.env.TENANT_DB_PREFIX || 'aafok_tenant_'}${tenantId}`
   }).asPromise();
   return conn;

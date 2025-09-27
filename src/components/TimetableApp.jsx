@@ -15,14 +15,81 @@ axios.interceptors.request.use((config) => {
 });
 
 // --- PREDEFINED DATA ---
-const PREDEFINED_SUBJECTS = [
-  "Engineering Maths-I", "Physics", "Intro to Programming", "Digital Design", "Communication Skills", "Physics Lab", "Programming Lab", "Digital Design Lab",
-  "Data Structures", "Object-Oriented Programming", "Discrete Mathematics", "Computer Organization", "Operating Systems", "Data Structures Lab", "OOP Lab", "OS Lab",
-  "Applied Chemistry", "Basic Electrical Engineering", "Engineering Mechanics", "Workshop Practice", "Applied Chemistry Lab", "Basic Electrical Engineering Lab", "Workshop",
-  "Signals & Systems", "Analog Electronics", "Digital Circuits", "Network Theory", "Electromagnetic Fields", "Analog Electronics Lab", "Digital Circuits Lab", "Network Theory Lab",
-  "Database Management", "Software Engineering", "Computer Networks", "DBMS Lab", "Networks Lab",
-].sort();
+// const PREDEFINED_SUBJECTS = [
+//   "Engineering Maths-I", "Physics", "Intro to Programming", "Digital Design", "Communication Skills", "Physics Lab", "Programming Lab", "Digital Design Lab",
+//   "Data Structures", "Object-Oriented Programming", "Discrete Mathematics", "Computer Organization", "Operating Systems", "Data Structures Lab", "OOP Lab", "OS Lab",
+//   "Applied Chemistry", "Basic Electrical Engineering", "Engineering Mechanics", "Workshop Practice", "Applied Chemistry Lab", "Basic Electrical Engineering Lab", "Workshop",
+//   "Signals & Systems", "Analog Electronics", "Digital Circuits", "Network Theory", "Electromagnetic Fields", "Analog Electronics Lab", "Digital Circuits Lab", "Network Theory Lab",
+//   "Database Management", "Software Engineering", "Computer Networks", "DBMS Lab", "Networks Lab",
+// ].sort();
 
+
+const PREDEFINED_SUBJECTS = [
+  // Semester I Courses
+  "Digital Design (DD)", 
+  "Engineering Physics (EP)", 
+  "Fundamentals of Computer Programming (FCP)", 
+  "Engineering Mathematics - I (EM-I)", 
+  "Electrical Circuit Analysis (ECA)",
+  "Indian Constitution (IC)",
+  "Digital Design Lab (DD LAB)",
+  "ICT Workshop - I Lab (ICTW-I LAB)",
+  "Engineering Physics Lab (EP LAB)", 
+  "Fundamentals of Computer Programming Lab (FCP LAB)", 
+  "Physics Lab (PHY LAB)", 
+  // "ADVOCATE Session (ADVOCATE)", // Listed as a session with an instructor's title
+
+  // Semester III Courses
+  "Principles of Fundamentals of Programming Structures (PFPS)", 
+  "Probability & Statistical Analysis (P&SA)", 
+  "Automata and Formal Languages (A&FL)", 
+  "Discrete Mathematical Structures (DMS)", 
+  "Operating Systems (OS)", 
+  "Economics & Business Management (E&BM)", 
+  "Signals & Systems (S&S)", 
+  "Electronic Circuits (EC)", 
+  "Electrical Networks (EN)", 
+  "DBMS Lab", 
+  "PFPS Lab", 
+  "OS Lab", 
+  "Signals & Systems Lab (S&S LAB)", 
+  "Electronic Circuits Lab (EC LAB)", // Appears as EC LAB-2, EC LAB-3
+
+  // Semester V Courses
+  "Image Processing & Computer Vision (IP&CV)", 
+  "Cloud Computing & Big Data Infrastructure (CC&BDI)", 
+  "Object Oriented Programming (OOP)", 
+  "Wireless Communication (WC)", 
+  "Nanoscale Device Engineering (NDE)",
+  "Innovation & Entrepreneurship (I&E)", 
+  "Fuzzy & Neural Networks (F&NN)", 
+  "Computer Graphics (CG)", 
+  "High-Performance Computing (HPC)", 
+  "Data Science (DS)", 
+  "Image Processing & Computer Vision Lab (IP&CV Lab)", 
+  "Cloud Computing & Big Data Infrastructure Lab (CC&BDI Lab)", 
+  "Wireless Communication Lab (WC Lab)", 
+  "Data Science Lab (DS Lab)", 
+  "Computer Graphics Lab (CG Lab)", 
+  "HPC Lab", 
+
+  // Semester VII Courses
+  "Behavioral Aspects of Law (BaL)", 
+  "Cyber Ethics & Professional Practice (CE&PP)", 
+  "Natural Language Processing (NLP)", 
+  "Artificial Intelligence (Al)", 
+  "Internet of Things (IOT)", 
+  "NS", // Unspecified subject name
+  "Natural Language Processing Lab (NLP Lab)", 
+  "NS Lab", 
+  "AI Lab", 
+  "Communication Lab (CL Lab)",
+  "IOT Lab", 
+
+  // Generic Labs appearing across semesters (CSE/ECE)
+  "Computer Science Lab (CS LAB)",
+  "Extra Curricular Activity (ECA)" // Treated as a non-academic slot in the time table
+].sort();
 // --- HELPER COMPONENTS ---
 const Spinner = () => (
   <div className="flex justify-center items-center h-full my-10">
@@ -272,9 +339,16 @@ const LoginPage = ({ onLoginSuccess, setPage }) => {
       });
       onLoginSuccess(data);
     } catch (err) {
-      setError(
-        err.response?.data?.message || "An error occurred during login."
-      );
+      console.error('Login error:', err);
+      if (err.response?.status === 401) {
+        setError("Invalid email or password.");
+      } else if (err.response?.status === 500) {
+        setError("Server error. Please try again later.");
+      } else {
+        setError(
+          err.response?.data?.message || "An error occurred during login."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -345,9 +419,16 @@ const RegisterPage = ({ onRegisterSuccess, setPage }) => {
       const { data } = await axios.post(`${API_URL}/users`, { name, email, password });
       onRegisterSuccess(data);
     } catch (err) {
-      setError(
-        err.response?.data?.message || "An error occurred during registration."
-      );
+      console.error('Register error:', err);
+      if (err.response?.status === 400) {
+        setError(err.response?.data?.message || "User already exists or invalid data.");
+      } else if (err.response?.status === 500) {
+        setError("Server error. Please try again later.");
+      } else {
+        setError(
+          err.response?.data?.message || "An error occurred during registration."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -442,21 +523,39 @@ const AdminDashboard = ({ userInfo, onLogout }) => {
     setLoading(true);
     setError("");
     try {
+      // Check if user is authenticated
+      const stored = localStorage.getItem('userInfo');
+      if (!stored) {
+        setError("Please login to access the dashboard.");
+        setLoading(false);
+        return;
+      }
+
       const [teachersRes, batchesRes, timetablesRes] = await Promise.all([
         axios.get(`${API_URL}/teachers`),
         axios.get(`${API_URL}/timetables/batch`),
         axios.get(`${API_URL}/timetables`),
       ]);
-      setTeachers(teachersRes.data);
-      setBatches(batchesRes.data);
-      setTimetables(timetablesRes.data);
-      if (batchesRes.data.length > 0 && !selectedBatchName) {
+      setTeachers(teachersRes.data || []);
+      setBatches(batchesRes.data || []);
+      setTimetables(timetablesRes.data || []);
+      if (batchesRes.data && batchesRes.data.length > 0 && !selectedBatchName) {
         setSelectedBatchName(batchesRes.data[0].name);
-      } else if (batchesRes.data.length === 0) {
+      } else if (!batchesRes.data || batchesRes.data.length === 0) {
         setSelectedBatchName("");
       }
     } catch (err) {
-      setError("Failed to fetch initial data.");
+      console.error('Fetch data error:', err);
+      if (err.response?.status === 401) {
+        setError("Session expired. Please login again.");
+        // Clear invalid token
+        localStorage.removeItem('userInfo');
+        window.location.reload();
+      } else if (err.response?.status === 500) {
+        setError("Server error. Please try again later.");
+      } else {
+        setError("Failed to fetch initial data. Please check your connection.");
+      }
     } finally {
       setLoading(false);
     }
@@ -475,9 +574,17 @@ const AdminDashboard = ({ userInfo, onLogout }) => {
       });
       setNewTeacherName("");
       setSelectedTeacherSubjects([]);
+      setSuccess("Teacher added successfully!");
       fetchData();
     } catch (err) {
-      setError("Failed to add teacher.");
+      console.error('Add teacher error:', err);
+      if (err.response?.status === 401) {
+        setError("Session expired. Please login again.");
+        localStorage.removeItem('userInfo');
+        window.location.reload();
+      } else {
+        setError(err.response?.data?.message || "Failed to add teacher.");
+      }
     }
   };
   const handleInvite = async (e) => {
@@ -510,9 +617,17 @@ const AdminDashboard = ({ userInfo, onLogout }) => {
       setNewBatchName("");
       setSelectedBatchSubjects([]);
       setSelectedBatchLabs([]);
+      setSuccess("Batch added successfully!");
       fetchData();
     } catch (err) {
-      setError("Failed to add batch.");
+      console.error('Add batch error:', err);
+      if (err.response?.status === 401) {
+        setError("Session expired. Please login again.");
+        localStorage.removeItem('userInfo');
+        window.location.reload();
+      } else {
+        setError(err.response?.data?.message || "Failed to add batch.");
+      }
     }
   };
 
@@ -520,9 +635,17 @@ const AdminDashboard = ({ userInfo, onLogout }) => {
     if (window.confirm("Are you sure you want to delete this teacher?")) {
       try {
         await axios.delete(`${API_URL}/teachers/${teacherId}`);
+        setSuccess("Teacher deleted successfully!");
         fetchData();
       } catch (err) {
-        setError("Failed to delete teacher.");
+        console.error('Delete teacher error:', err);
+        if (err.response?.status === 401) {
+          setError("Session expired. Please login again.");
+          localStorage.removeItem('userInfo');
+          window.location.reload();
+        } else {
+          setError(err.response?.data?.message || "Failed to delete teacher.");
+        }
       }
     }
   };
@@ -530,9 +653,17 @@ const AdminDashboard = ({ userInfo, onLogout }) => {
     if (window.confirm("Are you sure you want to delete this batch?")) {
       try {
         await axios.delete(`${API_URL}/timetables/batch/${batchId}`);
+        setSuccess("Batch deleted successfully!");
         fetchData();
       } catch (err) {
-        setError("Failed to delete batch.");
+        console.error('Delete batch error:', err);
+        if (err.response?.status === 401) {
+          setError("Session expired. Please login again.");
+          localStorage.removeItem('userInfo');
+          window.location.reload();
+        } else {
+          setError(err.response?.data?.message || "Failed to delete batch.");
+        }
       }
     }
   };
@@ -559,7 +690,14 @@ const AdminDashboard = ({ userInfo, onLogout }) => {
       setSuccess(data.message || "Timetables generated successfully!");
       await fetchData();
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to generate timetables.");
+      console.error('Generate timetables error:', err);
+      if (err.response?.status === 401) {
+        setError("Session expired. Please login again.");
+        localStorage.removeItem('userInfo');
+        window.location.reload();
+      } else {
+        setError(err.response?.data?.message || "Failed to generate timetables.");
+      }
     } finally {
       setGenerating(false);
     }
@@ -864,7 +1002,14 @@ function TimetableApp() {
   useEffect(() => {
     const storedUserInfo = localStorage.getItem("userInfo");
     if (storedUserInfo) {
-      setUserInfo(JSON.parse(storedUserInfo));
+      try {
+        const parsedUserInfo = JSON.parse(storedUserInfo);
+        setUserInfo(parsedUserInfo);
+      } catch (error) {
+        console.error('Error parsing user info:', error);
+        localStorage.removeItem("userInfo");
+        setUserInfo(null);
+      }
     }
   }, []);
   const handleLoginSuccess = (data) => {

@@ -12,7 +12,10 @@ export const addTeacher = async (req, res) => {
         const Teacher = conn.models.Teacher || conn.model('Teacher', teacherSchema);
         const teacher = await Teacher.findOneAndUpdate({ name }, { subjects }, { new: true, upsert: true });
         res.status(201).json(teacher);
-    } catch (error) { res.status(500).json({ message: 'Server Error' }); }
+    } catch (error) { 
+        console.error('Error adding teacher:', error);
+        res.status(500).json({ message: 'Server Error' }); 
+    }
 };
 
 export const getTeachers = async (req, res) => {
@@ -21,7 +24,10 @@ export const getTeachers = async (req, res) => {
         const Teacher = conn.models.Teacher || conn.model('Teacher', teacherSchema);
         const teachers = await Teacher.find({});
         res.json(teachers);
-    } catch (error) { res.status(500).json({ message: 'Server Error' }); }
+    } catch (error) { 
+        console.error('Error fetching teachers:', error);
+        res.status(500).json({ message: 'Server Error' }); 
+    }
 };
 
 // --- NEW: Function to handle deleting a teacher by their ID ---
@@ -37,6 +43,7 @@ export const deleteTeacher = async (req, res) => {
             res.status(404).json({ message: 'Teacher not found' });
         }
     } catch (error) {
+        console.error('Error deleting teacher:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 };

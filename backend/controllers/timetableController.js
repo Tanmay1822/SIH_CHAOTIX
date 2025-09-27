@@ -42,6 +42,7 @@ export const getTimetables = async (req, res) => {
         const timetables = await Timetable.find({});
         res.json(timetables);
     } catch (error) {
+        console.error('Error fetching timetables:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 };
@@ -57,6 +58,7 @@ export const addOrUpdateBatch = async (req, res) => {
         const batch = await Batch.findOneAndUpdate({ name }, { subjects, labs }, { new: true, upsert: true });
         res.status(201).json(batch);
     } catch(error) {
+        console.error('Error adding/updating batch:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 };
@@ -68,6 +70,7 @@ export const getBatches = async (req, res) => {
         const batches = await Batch.find({});
         res.json(batches);
     } catch (error) {
+        console.error('Error fetching batches:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 }
@@ -90,6 +93,7 @@ export const deleteBatch = async (req, res) => {
             res.status(404).json({ message: 'Batch not found' });
         }
     } catch (error) {
+        console.error('Error deleting batch:', error);
         res.status(500).json({ message: 'Server Error' });
     }
 };
