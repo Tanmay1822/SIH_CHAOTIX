@@ -24,7 +24,7 @@ export const generateTimetableAlgorithm = (batches, teachers, classrooms, labs) 
     const sortedTimeSlots = ["09:00-10:00", "10:00-11:00", "11:00-12:00", "12:00-13:00", "13:00-14:00", "14:00-15:00", "15:00-16:00", "16:00-17:00"];
     const possibleLunchSlots = ["12:00-13:00", "13:00-14:00"];
     const THEORY_HOURS_PER_WEEK = 3;
-    const LAB_SESSIONS_PER_WEEK = 1;
+    const LAB_SESSIONS_PER_WEEK = 2;
 
     // --- DATA PREPARATION ---
     const teacherSubjectMap = {};
